@@ -1,0 +1,365 @@
+<!-- FACE-LOCK:BEGIN -->
+<style>
+#flock{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow-y:auto;background:radial-gradient(ellipse at 50% 40%,#06202c,#010407 75%);color:#19e6ff;font-family:"Segoe UI",Arial,sans-serif;text-align:center;transition:opacity .8s}
+#flock::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(25,230,255,.035) 0 1px,transparent 1px 4px)}
+#flock::after{content:"";position:absolute;inset:18px;pointer-events:none;border:1px solid rgba(25,230,255,.18);clip-path:polygon(0 0,60px 0,60px 2px,2px 2px,2px 60px,0 60px,0 0,100% 0,100% 60px,calc(100% - 2px) 60px,calc(100% - 2px) 2px,calc(100% - 60px) 2px,calc(100% - 60px) 0,100% 0,100% 100%,calc(100% - 60px) 100%,calc(100% - 60px) calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) calc(100% - 60px),100% calc(100% - 60px),0 100%,60px 100%,60px calc(100% - 2px),2px calc(100% - 2px),2px calc(100% - 60px),0 calc(100% - 60px))}
+.fl-title{font-size:26px;font-weight:700;letter-spacing:10px;text-shadow:0 0 14px #19e6ff}
+.fl-sub{font-size:11px;letter-spacing:5px;color:#0a8fa3;margin:6px 0 34px}
+.fl-cam{position:relative;width:260px;height:260px;margin:0 auto 34px}
+.fl-cam video{width:100%;height:100%;object-fit:cover;border-radius:50%;transform:scaleX(-1);border:2px solid #19e6ff;box-shadow:0 0 30px rgba(25,230,255,.45);background:#02070c}
+.fl-cam canvas{position:absolute;left:0;top:0;width:260px;height:260px;transform:scaleX(-1);border-radius:50%;pointer-events:none}
+.fl-ring{position:absolute;inset:-14px;border-radius:50%;border:2px solid transparent;border-top-color:#19e6ff;border-bottom-color:#19e6ff;animation:flspin 3s linear infinite}
+.fl-ring.r2{inset:-28px;border:1px dashed rgba(25,230,255,.5);animation-duration:12s;animation-direction:reverse}
+.fl-scan{position:absolute;left:8%;right:8%;height:3px;background:#19e6ff;box-shadow:0 0 14px #19e6ff;animation:flscan 2.2s ease-in-out infinite alternate}
+@keyframes flspin{to{transform:rotate(360deg)}}
+@keyframes flscan{from{top:10%}to{top:90%}}
+@media (prefers-reduced-motion:reduce){.fl-ring,.fl-scan{animation:none}}
+.fl-meter{width:260px;height:6px;margin:-18px auto 14px;border:1px solid rgba(25,230,255,.5)}
+.fl-meter i{display:block;height:100%;width:0;background:#19e6ff;box-shadow:0 0 8px #19e6ff;transition:width .2s,background .2s}
+.fl-status{font-size:13px;letter-spacing:3px;min-height:20px;padding:0 12px}
+.fl-status.ok{color:#3dff9a}.fl-status.bad{color:#ff4d5e}.fl-status.warn{color:#ffd23d}
+.fl-log{width:300px;height:58px;margin:16px auto 0;overflow:hidden;text-align:left;font:10px/1.5 Consolas,monospace;color:#0a8fa3;letter-spacing:1px}
+#flock .flbtn,#flbar .flbtn,#fltoast .flbtn,#flmodal .flbtn{width:auto;display:inline-block;margin:14px 6px 0;padding:10px 22px;text-align:center;font:600 12px Consolas,monospace;letter-spacing:3px;color:#19e6ff;background:rgba(25,230,255,.08);border:1px solid #19e6ff;border-radius:0;cursor:pointer;transition:background .2s,box-shadow .2s}
+#flock .flbtn:hover,#flbar .flbtn:hover,#fltoast .flbtn:hover,#flmodal .flbtn:hover{background:rgba(25,230,255,.22);box-shadow:0 0 12px rgba(25,230,255,.5)}
+#flock .flbtn.sm,#flmodal .flbtn.sm{padding:6px 14px;font-size:10px;margin:8px 4px 0}
+#flbar{position:fixed;left:14px;bottom:12px;z-index:200;display:none;flex-wrap:wrap;max-width:calc(100vw - 28px);align-items:center;gap:8px;font:11px Consolas,monospace;letter-spacing:2px;color:#19e6ff;background:rgba(0,10,18,.85);border:1px solid rgba(25,230,255,.35);padding:4px 10px}
+#flbar .flbtn{margin:0;padding:5px 10px;font-size:10px;letter-spacing:1px}
+.fl-help{width:340px;max-width:90vw;margin:12px auto 0;font:11px/1.6 Consolas,monospace;color:#8ff6ff;border:1px solid rgba(25,230,255,.35);background:rgba(0,10,18,.8);padding:10px;text-align:left}
+#fltoast{position:fixed;right:16px;bottom:16px;z-index:300;display:none;max-width:420px;background:rgba(20,2,8,.95);border:1px solid #ff4d5e;color:#ffe9ec;padding:12px;font:11px Consolas,monospace;letter-spacing:1px;box-shadow:0 0 20px rgba(255,77,94,.4)}
+#fltoast div{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#fltoast figure{margin:0}#fltoast img{width:110px;display:block;border:1px solid #ff4d5e}#fltoast figcaption{font-size:9px;max-width:110px}
+#flmodal{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(0,4,8,.78)}
+.fl-box{width:340px;max-width:90vw;border:1px solid #19e6ff;background:#021019;padding:20px;color:#8ff6ff;font:12px/1.6 Consolas,monospace;box-shadow:0 0 30px rgba(25,230,255,.35);text-align:center}
+.fl-box input{width:100%;box-sizing:border-box;margin:12px 0 4px;padding:9px;background:#010a10;color:#19e6ff;border:1px solid rgba(25,230,255,.6);font:14px Consolas,monospace;letter-spacing:3px;text-align:center;outline:none}
+</style>
+<div id="flock"><div>
+  <div class="fl-title">J.A.R.V.I.S.</div>
+  <div class="fl-sub">FACIAL AUTHENTICATION</div>
+  <div class="fl-cam"><video id="flv" autoplay muted playsinline></video><canvas id="flc" width="260" height="260"></canvas><div class="fl-ring"></div><div class="fl-ring r2"></div><div class="fl-scan"></div></div>
+  <div class="fl-meter"><i id="flm"></i></div>
+  <div id="fls" class="fl-status">INITIALIZING BIOMETRICS...</div>
+  <div><button id="flb" class="flbtn" style="display:none"></button><button id="flp" class="flbtn" style="display:none">USE PIN</button></div>
+  <div><button id="flr" class="flbtn sm">RESCAN</button><button id="flcm" class="flbtn sm">SWITCH CAMERA</button><button id="flsn" class="flbtn sm">SOUND: ON</button><button id="flh" class="flbtn sm">HELP</button></div>
+  <div id="flhelp" class="fl-help" style="display:none">Look at the camera to unlock.<br>First time? Click ENROLL MY FACE (two quick poses).<br>Liveness: you may be asked to turn your head.<br>Camera trouble? Try SWITCH CAMERA, RESCAN or USE PIN.<br>After 6 failed scans, RE-ENROLL needs your PIN.<br>Too many wrong PINs triggers a timed lockout.<br>Alt+L locks the page again.<br>Locked out for good? Run the installer with -Uninstall.</div>
+  <div class="fl-log" id="fll"></div>
+</div></div>
+<div id="flbar"><span id="flop"></span><button id="fllg" class="flbtn">LOG</button><button id="flpn" class="flbtn">CHANGE PIN</button><button id="fllm" class="flbtn">AUTO-LOCK</button><button id="fllv" class="flbtn">LIVENESS</button><button id="flre" class="flbtn">RE-ENROLL</button><button id="fllk" class="flbtn">LOCK (ALT+L)</button></div>
+<div id="fltoast"></div>
+<div id="flmodal"><div class="fl-box"><div id="flmq"></div><input id="flmi" autocomplete="off"><div><button id="flmok" class="flbtn sm">OK</button><button id="flmno" class="flbtn sm">CANCEL</button></div></div></div>
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i)};
+var K={face:"jarvis_face_v2",oldface:"jarvis_face_v1",name:"jarvis_name",pin:"jarvis_pin_v2",oldpin:"jarvis_pin",intr:"jarvis_intruders",snd:"jarvis_snd",live:"jarvis_live",idle:"jarvis_idle",fail:"jarvis_pinfail"};
+var ls={
+  get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  set:function(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}},
+  del:function(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+function jget(k,d){try{var v=ls.get(k);return v?JSON.parse(v):d}catch(e){return d}}
+var TH=.5,NEED=5,YAW=.16,LIBS=["https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js","https://unpkg.com/@vladmandic/face-api@1.7.12/dist/face-api.js"],MODELS=["https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/","https://unpkg.com/@vladmandic/face-api@1.7.12/model/"];
+var lock=$("flock"),vid=$("flv"),oc=$("flc"),st=$("fls"),bt=$("flb"),pb=$("flp"),mt=$("flm"),lg=$("fll"),bar=$("flbar"),tw=$("fltoast");
+var stream=null,opts=null,gen=0,lastMsg="",lastSnap=0,idleT=null,hideT=null,noteT=null,ac=null,camIdx=0,hiddenAt=0;
+var snd=ls.get(K.snd)!=="off",live=ls.get(K.live)!=="off",idleMin=parseInt(ls.get(K.idle)||"5",10);
+if(isNaN(idleMin)||[0,1,5,15].indexOf(idleMin)<0)idleMin=5;
+
+function S(t,c){st.textContent=t;st.className="fl-status "+(c||"")}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function L(m){var d=document.createElement("div");d.textContent="> "+m;lg.appendChild(d);while(lg.children.length>4)lg.removeChild(lg.firstChild)}
+function mark(m){if(m!==lastMsg){lastMsg=m;L(m)}}
+function M(p,c){mt.style.width=Math.max(0,Math.min(100,p))+"%";mt.style.background=c||"#19e6ff"}
+function beep(f,d,t){
+  if(!snd)return;
+  try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
+    var o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.type=t||"sine";g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}
+}
+function note(m){clearTimeout(noteT);tw.textContent="";var b=document.createElement("b");b.textContent=m;tw.appendChild(b);tw.style.display="block";noteT=setTimeout(function(){tw.style.display="none"},2800)}
+
+/* ---------- in-page dialogs (PIN is masked, unlike prompt()) ---------- */
+function ask(msg,o){
+  o=o||{};
+  return new Promise(function(res){
+    var m=$("flmodal"),q=$("flmq"),i=$("flmi"),ok=$("flmok"),no=$("flmno");
+    q.textContent=msg;i.type=o.type||"text";i.value=o.def||"";i.style.display=o.confirm?"none":"";
+    m.style.display="flex";if(!o.confirm)setTimeout(function(){i.focus()},30);else ok.focus();
+    function done(v){m.style.display="none";ok.onclick=null;no.onclick=null;i.onkeydown=null;res(v)}
+    ok.onclick=function(){done(o.confirm?true:i.value)};
+    no.onclick=function(){done(o.confirm?false:null)};
+    i.onkeydown=function(e){if(e.key==="Enter")ok.onclick();else if(e.key==="Escape")no.onclick()};
+  });
+}
+
+/* ---------- PIN: salted PBKDF2, timed lockout, legacy-hash upgrade ---------- */
+function hex(b){return Array.from(new Uint8Array(b)).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("")}
+async function sha(s){return hex(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)))}
+async function kdf(p,salt){
+  var k=await crypto.subtle.importKey("raw",new TextEncoder().encode(p),"PBKDF2",false,["deriveBits"]);
+  var s=new Uint8Array(salt.match(/../g).map(function(h){return parseInt(h,16)}));
+  return hex(await crypto.subtle.deriveBits({name:"PBKDF2",salt:s,iterations:150000,hash:"SHA-256"},k,256));
+}
+async function pinSet(p){var s=hex(crypto.getRandomValues(new Uint8Array(16)));ls.set(K.pin,s+":"+await kdf(p,s));ls.del(K.oldpin)}
+function hasPin(){return !!(ls.get(K.pin)||ls.get(K.oldpin))}
+async function pinOk(p){
+  var v=ls.get(K.pin);
+  if(v){var a=v.split(":");return await kdf(p,a[0])===a[1]}
+  var o=ls.get(K.oldpin);
+  if(o&&await sha(p)===o){await pinSet(p);return true}
+  return false;
+}
+function lockLeft(){return Math.max(0,(jget(K.fail,{}).until||0)-Date.now())}
+function pinFailed(){var f=jget(K.fail,{});f.n=(f.n||0)+1;if(f.n>=3)f.until=Date.now()+Math.min(3600,30*Math.pow(2,f.n-3))*1000;ls.set(K.fail,JSON.stringify(f));return f.n}
+function pinClear(){ls.del(K.fail)}
+
+/* ---------- face helpers ---------- */
+function templates(){
+  var v=jget(K.face,null);
+  if(v&&v.length)return v.map(function(a){return new Float32Array(a)});
+  var o=jget(K.oldface,null);
+  return o?[new Float32Array(o)]:null;
+}
+function dist(d,T){var m=9;T.forEach(function(t){m=Math.min(m,faceapi.euclideanDistance(d,t))});return m}
+function yaw(r){var p=r.landmarks.positions;return(p[30].x-(p[0].x+p[16].x)/2)/Math.abs(p[16].x-p[0].x)}
+function draw(r,col){
+  var c=oc.getContext("2d");c.clearRect(0,0,260,260);if(!r)return;
+  var vw=vid.videoWidth||640,vh=vid.videoHeight||480,s=Math.max(260/vw,260/vh),ox=(vw*s-260)/2,oy=(vh*s-260)/2,b=r.detection.box;
+  var x=b.x*s-ox,y=b.y*s-oy,w=b.width*s,h=b.height*s,k=Math.min(w,h)*.22;
+  c.strokeStyle=col;c.fillStyle=col;c.lineWidth=2.5;c.shadowColor=col;c.shadowBlur=8;c.beginPath();
+  [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(function(p){c.moveTo(p[0],p[1]+p[3]*k);c.lineTo(p[0],p[1]);c.lineTo(p[0]+p[2]*k,p[1])});
+  c.stroke();r.landmarks.positions.forEach(function(p){c.fillRect(p.x*s-ox-1,p.y*s-oy-1,2,2)});
+}
+async function grab(){
+  var a=await faceapi.detectAllFaces(vid,opts).withFaceLandmarks().withFaceDescriptors();
+  if(!a.length)return null;
+  return a.reduce(function(b,x){return x.detection.box.area>b.detection.box.area?x:b});
+}
+function snap(){var c=document.createElement("canvas");c.width=160;c.height=120;try{c.getContext("2d").drawImage(vid,0,0,160,120)}catch(e){}return c.toDataURL("image/jpeg",.6)}
+function logIntruder(why){var a=jget(K.intr,[]);a.push({t:Date.now(),img:snap(),why:why||""});ls.set(K.intr,JSON.stringify(a.slice(-5)))}
+function showLog(){
+  var a=jget(K.intr,[]);
+  if(!a.length){note("NO UNAUTHORIZED ATTEMPTS RECORDED");return}
+  clearTimeout(noteT);tw.textContent="";
+  var h=document.createElement("b");h.textContent="\u26A0 "+a.length+" UNAUTHORIZED ATTEMPT(S) WHILE YOU WERE AWAY";tw.appendChild(h);
+  var w=document.createElement("div");
+  a.forEach(function(x){
+    if(!x||typeof x.img!=="string"||x.img.indexOf("data:image/jpeg")!==0)return;
+    var f=document.createElement("figure"),i=document.createElement("img"),c=document.createElement("figcaption");
+    i.src=x.img;c.textContent=new Date(x.t).toLocaleString()+(x.why?" ("+x.why+")":"");f.appendChild(i);f.appendChild(c);w.appendChild(f);
+  });
+  tw.appendChild(w);
+  var d=document.createElement("button");d.className="flbtn";d.textContent="DISMISS & CLEAR";d.onclick=function(){ls.del(K.intr);tw.style.display="none"};
+  var x=document.createElement("button");x.className="flbtn";x.textContent="CLOSE";x.onclick=function(){tw.style.display="none"};
+  tw.appendChild(d);tw.appendChild(x);tw.style.display="block";
+}
+
+/* ---------- auto-lock ---------- */
+function bump(){clearTimeout(idleT);if(idleMin>0)idleT=setTimeout(function(){if(lock.style.display==="none")relock()},idleMin*60000)}
+["mousemove","keydown","pointerdown"].forEach(function(e){document.addEventListener(e,function(){if(lock.style.display==="none")bump()},true)});
+document.addEventListener("keydown",function(e){if(e.altKey&&e.key.toLowerCase()==="l"&&lock.style.display==="none")relock()});
+document.addEventListener("visibilitychange",function(){
+  if(lock.style.display!=="none"||idleMin===0)return;
+  if(document.hidden)hiddenAt=Date.now();
+  else if(hiddenAt&&Date.now()-hiddenAt>60000){hiddenAt=0;relock()}
+});
+function barLabels(){
+  $("fllm").textContent="AUTO-LOCK: "+(idleMin>0?idleMin+" MIN":"OFF");
+  $("fllv").textContent="LIVENESS: "+(live?"ON":"OFF");
+}
+
+/* ---------- lock / unlock ---------- */
+async function grant(){
+  pinClear();S("ACCESS GRANTED","ok");L("ACCESS GRANTED");beep(660,.12);setTimeout(function(){beep(990,.18)},140);await sleep(700);unlock();
+}
+function unlock(){
+  gen++;if(stream)stream.getTracks().forEach(function(t){t.stop()});vid.srcObject=null;
+  var nm=ls.get(K.name)||"Sir";
+  lock.style.opacity=0;clearTimeout(hideT);hideT=setTimeout(function(){lock.style.display="none"},800);
+  $("flop").textContent="OPERATOR: "+nm.toUpperCase();barLabels();bar.style.display="flex";bump();
+  if(jget(K.intr,[]).length)showLog();
+  try{if(window.say)window.say("Facial recognition complete. Welcome back, "+nm+".")}catch(e){}
+}
+async function relock(){
+  gen++;clearTimeout(hideT);clearTimeout(idleT);bar.style.display="none";tw.style.display="none";lg.innerHTML="";lastMsg="";M(0);draw(null);
+  lock.style.display="flex";lock.style.opacity=1;
+  try{await cam();begin()}catch(e){fail(e)}
+}
+async function cam(){
+  S("STARTING CAMERA...");
+  if(stream)stream.getTracks().forEach(function(t){t.stop()});
+  stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},facingMode:"user"}});
+  vid.srcObject=stream;await vid.play();L("CAMERA ONLINE");
+}
+function fail(e){
+  var n=e&&e.name,m=n==="NotAllowedError"?"CAMERA BLOCKED - ALLOW IT IN CHROME (ICON LEFT OF ADDRESS BAR)":n==="NotFoundError"?"NO CAMERA FOUND":n==="NotReadableError"?"CAMERA IN USE BY ANOTHER APP":"FAILED: "+String((e&&e.message)||e||"unknown").slice(0,80);
+  S(m,"bad");L("ERROR");bt.textContent="RETRY";bt.style.display="";pb.style.display=hasPin()?"":"none";
+}
+function begin(){
+  pb.style.display=hasPin()?"":"none";bt.style.display="none";
+  if(templates()){L("USER PROFILE FOUND");verify()}
+  else{S("NO AUTHORIZED USER FOUND");bt.textContent="ENROLL MY FACE";bt.style.display=""}
+}
+
+/* ---------- enrollment: two poses (neutral + relaxed/smile) ---------- */
+async function collect(n,label,ms){
+  var s=[],t0=Date.now();S(label);M(0);
+  while(s.length<n&&Date.now()-t0<ms){
+    try{var r=await grab();if(r){draw(r,"#19e6ff");s.push(r.descriptor);M(s.length/n*100)}else{draw(null);mark("NO FACE IN FRAME")}}catch(e){}
+    await sleep(350);
+  }
+  return s;
+}
+function mean(s){var m=new Array(128).fill(0);s.forEach(function(d){for(var i=0;i<128;i++)m[i]+=d[i]/s.length});return m}
+async function enroll(){
+  gen++;bt.style.display="none";pb.style.display="none";L("ENROLLMENT STARTED");
+  var a=await collect(6,"HOLD STILL - LOOK STRAIGHT AT THE CAMERA",15000);
+  if(a.length<6){draw(null);S("FACE NOT CLEAR - TRY AGAIN","bad");bt.textContent="TRY AGAIN";bt.style.display="";return}
+  L("POSE 1 CAPTURED");beep(660,.08);await sleep(700);
+  var b=await collect(5,"NOW RELAX OR SMILE - KEEP LOOKING AT THE CAMERA",15000);
+  if(b.length<5){draw(null);S("FACE NOT CLEAR - TRY AGAIN","bad");bt.textContent="TRY AGAIN";bt.style.display="";return}
+  draw(null);
+  var nm=((await ask("Enter your name for JARVIS:",{def:ls.get(K.name)||""}))||"").trim().slice(0,24)||"Sir";
+  var pn=((await ask("Set a backup PIN (4+ digits, optional). It unlocks JARVIS if the camera fails and is needed to re-enroll:",{type:"password"}))||"").trim();
+  if(pn){
+    var c=((await ask("Re-enter the PIN to confirm:",{type:"password"}))||"").trim();
+    if(c!==pn){note("PINS DID NOT MATCH - NO PIN SET");pn=""}
+  }
+  if(!ls.set(K.face,JSON.stringify([mean(a),mean(b)]))){S("BROWSER STORAGE BLOCKED - CANNOT SAVE","bad");bt.textContent="TRY AGAIN";bt.style.display="";return}
+  ls.del(K.oldface);ls.set(K.name,nm);
+  if(pn.length>=4){try{await pinSet(pn)}catch(e){ls.del(K.pin);note("PIN UNAVAILABLE ON THIS ADDRESS (USE LOCALHOST)")}}
+  else{ls.del(K.pin);ls.del(K.oldpin)}
+  pinClear();
+  S("FACE SAVED","ok");L("PROFILE SAVED: "+nm.toUpperCase());await sleep(800);begin();
+}
+
+/* ---------- verification: match -> (optional) head-turn liveness ---------- */
+async function verify(){
+  var my=++gen,T=templates(),ok=0,bad=0,phase="match",ch=0,chT=0,prev=null;
+  if(!T){begin();return}
+  S("SCANNING...");
+  while(my===gen){
+    var wait=300;
+    try{
+      var r=await grab();
+      if(my!==gen)return;
+      if(!r){
+        if(phase==="match")ok=0;prev=null;draw(null);M(0);
+        S(phase==="turn"?"KEEP YOUR FACE IN FRAME":"LOOK AT THE CAMERA");mark("NO FACE IN FRAME");
+      }else{
+        var d=dist(r.descriptor,T),p=Math.max(0,Math.round(100-d*100));
+        if(phase==="match"){
+          if(d<TH){
+            bad=0;ok++;draw(r,"#3dff9a");M(p,"#3dff9a");S("VERIFYING... "+ok+"/"+NEED);mark("FACE MATCH");
+            if(ok>=NEED){
+              if(live){phase="turn";ch=Math.random()<.5?-1:1;chT=Date.now();prev=null;L("LIVENESS CHECK");beep(520,.08)}
+              else{await grant();return}
+            }
+          }else{
+            ok=0;bad++;draw(r,"#ff4d5e");M(p,"#ff4d5e");S("UNKNOWN USER - ACCESS DENIED","bad");mark("NO MATCH");
+            if(bad===3&&Date.now()-lastSnap>15000){lastSnap=Date.now();logIntruder("FACE");L("INTRUDER PHOTO SAVED");beep(180,.4,"square")}
+            if(bad>=6&&hasPin()){bt.textContent="RE-ENROLL (PIN)";bt.style.display=""}
+          }
+        }else{
+          wait=120;
+          var b=r.detection.box,cx=b.x+b.width/2,cy=b.y+b.height/2;
+          var jumped=prev&&Math.hypot(cx-prev.x,cy-prev.y)>b.width*.8;
+          prev={x:cx,y:cy};
+          if(d>TH+.15||jumped){
+            phase="match";ok=0;bad++;draw(r,"#ff4d5e");S("TRACKING LOST - START OVER","bad");L("LIVENESS ABORTED");beep(180,.3,"square");
+          }else if(Date.now()-chT>10000){
+            phase="match";ok=0;draw(r,"#ff4d5e");S("LIVENESS CHECK TIMED OUT","bad");L("LIVENESS TIMEOUT");beep(180,.3,"square");
+          }else{
+            var y=yaw(r);
+            draw(r,"#ffd23d");M(Math.abs(y)/YAW*100,"#ffd23d");S("TURN YOUR HEAD "+(ch<0?"RIGHT":"LEFT")+" SLOWLY","warn");
+            if(ch*y>=YAW){L("LIVENESS CONFIRMED");await grant();return}
+          }
+        }
+      }
+    }catch(e){}
+    await sleep(wait);
+  }
+}
+
+/* ---------- buttons ---------- */
+bt.onclick=async function(){
+  var t=bt.textContent;
+  if(t==="RETRY"){location.reload();return}
+  if(t.indexOf("RE-ENROLL")>-1){
+    var w=lockLeft();if(w>0){S("PIN LOCKED - WAIT "+Math.ceil(w/1000)+"S","bad");return}
+    var p=await ask("Enter backup PIN to re-enroll:",{type:"password"});if(p===null)return;
+    try{
+      if(!(await pinOk(p.trim()))){pinFailed();S("WRONG PIN","bad");beep(180,.4,"square");return}
+    }catch(e){S("PIN CHECK UNAVAILABLE","bad");return}
+    pinClear();
+  }
+  enroll();
+};
+pb.onclick=async function(){
+  var w=lockLeft();if(w>0){S("PIN LOCKED - WAIT "+Math.ceil(w/1000)+"S","bad");return}
+  var p=await ask("Enter backup PIN:",{type:"password"});if(p===null)return;
+  try{
+    if(await pinOk(p.trim())){L("PIN ACCEPTED");await grant()}
+    else{
+      var n=pinFailed();S("WRONG PIN","bad");L("PIN REJECTED");beep(180,.4,"square");
+      if(n>=3&&Date.now()-lastSnap>15000){lastSnap=Date.now();logIntruder("PIN")}
+      if(lockLeft()>0)L("PIN LOCKED FOR "+Math.ceil(lockLeft()/1000)+"S");
+    }
+  }catch(e){S("PIN CHECK UNAVAILABLE","bad")}
+};
+$("fllk").onclick=function(){relock()};
+$("fllg").onclick=function(){showLog()};
+$("flpn").onclick=async function(){
+  var p=await ask("New backup PIN (4+ digits). Leave blank to remove it:",{type:"password"});if(p===null)return;p=p.trim();
+  if(!p){ls.del(K.pin);ls.del(K.oldpin);note("BACKUP PIN REMOVED");return}
+  if(p.length<4){note("PIN MUST BE 4+ DIGITS");return}
+  var c=await ask("Re-enter the new PIN:",{type:"password"});if(c===null)return;
+  if(c.trim()!==p){note("PINS DID NOT MATCH");return}
+  try{await pinSet(p);note("BACKUP PIN UPDATED")}catch(e){note("PIN UNAVAILABLE ON THIS ADDRESS (USE LOCALHOST)")}
+};
+$("fllm").onclick=function(){var o=[1,5,15,0];idleMin=o[(o.indexOf(idleMin)+1)%o.length];ls.set(K.idle,String(idleMin));barLabels();bump()};
+$("fllv").onclick=function(){live=!live;ls.set(K.live,live?"on":"off");barLabels()};
+$("flre").onclick=async function(){
+  if(await ask("Delete your saved face and enroll again?",{confirm:true})){ls.del(K.face);ls.del(K.oldface);relock()}
+};
+$("flr").onclick=function(){lg.innerHTML="";lastMsg="";M(0);draw(null);if(stream&&stream.active)begin();else cam().then(begin).catch(fail)};
+$("flcm").onclick=async function(){
+  try{
+    var ds=(await navigator.mediaDevices.enumerateDevices()).filter(function(d){return d.kind==="videoinput"});
+    if(ds.length<2){L("ONLY ONE CAMERA FOUND");return}
+    camIdx=(camIdx+1)%ds.length;gen++;
+    if(stream)stream.getTracks().forEach(function(t){t.stop()});
+    stream=await navigator.mediaDevices.getUserMedia({video:{deviceId:{exact:ds[camIdx].deviceId}}});
+    vid.srcObject=stream;await vid.play();L("CAMERA "+(camIdx+1)+" OF "+ds.length);begin();
+  }catch(e){fail(e)}
+};
+$("flsn").onclick=function(){snd=!snd;ls.set(K.snd,snd?"on":"off");this.textContent="SOUND: "+(snd?"ON":"OFF");if(snd)beep(660,.1)};
+$("flsn").textContent="SOUND: "+(snd?"ON":"OFF");
+$("flh").onclick=function(){var h=$("flhelp");h.style.display=h.style.display==="none"?"block":"none"};
+window.lockJarvis=relock;
+
+/* ---------- startup: CDN fallbacks for library and models ---------- */
+function loadScript(u){return new Promise(function(ok,no){var s=document.createElement("script");s.src=u;s.onload=ok;s.onerror=function(){s.remove();no(new Error("load failed"))};document.head.appendChild(s)})}
+async function libs(){
+  for(var i=0;i<LIBS.length&&typeof faceapi==="undefined";i++){try{await loadScript(LIBS[i])}catch(e){L("CDN "+(i+1)+" FAILED")}}
+  if(typeof faceapi==="undefined")throw new Error("face library did not load (check internet)");
+}
+async function models(){
+  var last=null;
+  for(var i=0;i<MODELS.length;i++){
+    try{
+      await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODELS[i]),faceapi.nets.faceLandmark68Net.loadFromUri(MODELS[i]),faceapi.nets.faceRecognitionNet.loadFromUri(MODELS[i])]);
+      return;
+    }catch(e){last=e;L("MODEL SOURCE "+(i+1)+" FAILED")}
+  }
+  throw last||new Error("models did not load");
+}
+async function init(){
+  try{
+    S("LOADING FACE MODELS...");L("LOADING NEURAL MODELS");
+    await libs();await models();
+    opts=new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:.5});
+    await cam();begin();
+  }catch(e){fail(e)}
+}
+init();
+})();
+</script>
+<!-- FACE-LOCK:END -->
